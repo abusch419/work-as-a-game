@@ -93,6 +93,16 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
 @media (max-width: 700px) { .how { grid-template-columns: 1fr; } }
 .how .card p { margin: 0; color: var(--muted); line-height: 1.55; font-size: 12px; }
 .how .card code { color: var(--accent); }
+.term { margin-top: 16px; background: #0d0d0f; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.term .bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+.term .bar i { width: 10px; height: 10px; border-radius: 50%; background: #2a2a2e; display: inline-block; }
+.term .bar .ttl { margin-left: 8px; } .term .bar .st { margin-left: auto; color: var(--good); }
+.term .body { height: 340px; overflow: auto; padding: 12px; font-size: 12px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+.term .body .c { color: var(--accent); } .term .body .m { color: var(--muted); } .term .body .g { color: var(--good); } .term .body .r { color: var(--bad); }
+.term .body .u { color: #7aa2ff; } .term .body .add { color: var(--good); background: #0f2a18; } .term .body .del { color: var(--bad); background: #2a1010; }
+.term .body .tbox { border: 1px solid #3a3a40; border-radius: 8px; padding: 8px 10px; margin: 6px 0; display: block; }
+.term .body .plan { border-color: #6a5a10; background: #17150a; }
+.caret { display: inline-block; width: 7px; height: 13px; background: var(--accent); vertical-align: -2px; animation: blink 1s steps(1) infinite; }
 </style>
 </head>
 <body>
@@ -114,6 +124,12 @@ header { display: flex; align-items: baseline; justify-content: space-between; g
           <div class="btns"><button class="btn" id="bB">B</button><button class="btn" id="bA">A</button></div>
         </div>
         <div class="hint">Arrows to move · Z / Enter = A · X / Esc = B</div>
+      </div>
+      <div class="term">
+        <div class="bar"><i></i><i></i><i></i><span class="ttl" id="termTitle">~/opendate · zsh</span><span class="st" id="termSt">idle</span></div>
+        <div class="body" id="term"><span class="m">Every move you pick runs real work here.
+Pick a ticket and choose a move.</span>
+<span class="caret"></span></div>
       </div>
     </div>
 
@@ -197,6 +213,78 @@ const GYMS = [
   { who: "blaine",   title: "Shipped on Friday",  at: 7 },
   { who: "giovanni", title: "Q4 Roadmap",         at: 8 },
 ];
+
+// ---------- simulated work terminal ----------
+const REPO = { "OD-412": "web", "OD-388": "api", "OD-401": "linear", "OD-420": "api", "OD-431": "web", "OD-433": "api", "OD-399": "slack", "Q4": "roadmap" };
+const FIX = {
+  "OD-412": { file: "spec/system/checkout.spec.ts", del: "await page.click('#pay'); expect(page).toHaveURL('/done')", add: "await page.click('#pay'); await expect(page).toHaveURL('/done', { timeout: 10_000 })", why: "race between Stripe redirect and assertion" },
+  "OD-388": { file: "app/models/show.rb", del: "Show.where(venue_id: id).map { |s| s.artist.name }", add: "Show.where(venue_id: id).includes(:artist).pluck('artists.name')", why: "N+1 on artists, 212 queries per request" },
+  "OD-401": { file: "linear", del: "OD-401 Holds calendar shows wrong timezone", add: "Closed as duplicate of OD-377", why: "same root cause as OD-377, already in review" },
+  "OD-420": { file: "app/controllers/settlements_controller.rb", del: "def create  # 340 lines", add: "def create = Settlements::Create.call(show:, params: settlement_params)", why: "extract 340 line action into a tested service" },
+  "OD-431": { file: "PR #2187", del: "status: waiting on review (4 days)", add: "status: approved, merged to main", why: "split PR in two so review fits in 10 minutes" },
+  "OD-433": { file: "app/services/tickets/checkout.rb", del: "fee = order.fees.sum(&:amount) / order.quantity", add: "fee = order.quantity.zero? ? 0 : order.fees.sum(&:amount) / order.quantity", why: "ZeroDivisionError on comp tickets with quantity 0" },
+  "OD-399": { file: "#eng", del: "\"quick q, is the offers page slow for anyone?\"", add: "\"fixed in OD-388, deploying now 🚀\"", why: "already fixed by the slow query ticket" },
+  "Q4":     { file: "roadmap/q4.md", del: "- [ ] Venue AI booking assistant", add: "- [x] Venue AI booking assistant (shipped)", why: "the whole quarter, one move at a time" },
+};
+const T = document.getElementById("term");
+let termLines = [];
+function tline(html, cls = "") { const caret = T.querySelector(".caret"); caret && caret.remove(); const d = document.createElement("div"); if (cls) d.className = cls; d.innerHTML = html; T.appendChild(d); T.appendChild(el('<span class="caret"></span>')); T.scrollTop = T.scrollHeight; return d; }
+async function ttype(text, cls = "c", prefix = "$ ") { const d = tline(prefix, cls); for (const ch of text) { d.textContent += ch; await sleep(12); } await sleep(150); }
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+async function tsteps(lines, gap = 260) { for (const [h, c] of lines) { tline(h, c); await sleep(gap); } }
+
+async function work(mv, f) {
+  const x = FIX[f.id], r = REPO[f.id], branch = `alex/${f.id.toLowerCase()}-${f.name.toLowerCase().replace(/ /g, "-")}`;
+  T.innerHTML = ""; document.getElementById("termSt").textContent = "running"; document.getElementById("termSt").style.color = "var(--accent)";
+  if (mv.type === "AI") {
+    document.getElementById("termTitle").textContent = `~/opendate/${r} · claude`;
+    await ttype(`claude "fix ${f.id}: ${f.name.toLowerCase()}"`);
+    await tsteps([
+      [`<span class="tbox">✻ Welcome to <b>Claude Code</b>\n<span class="m">cwd: ~/opendate/${r}</span></span>`],
+      [`<span class="m">● Reading Linear ticket ${f.id}…</span>`],
+      [`<span class="m">● Searching codebase for ${esc(x.file)}…</span>`],
+    ], 420);
+    tline(`<span class="tbox plan"><b class="c">📋 Plan</b>
+1. Reproduce: ${esc(f.src)}
+2. Root cause: ${esc(x.why)}
+3. Patch ${esc(x.file)}
+4. Add regression test
+5. Open PR, link ${f.id}
+<span class="m">Would you like to proceed?  ❯ Yes</span></span>`);
+    await sleep(1400);
+    await tsteps([
+      [`● Update(${esc(x.file)})`, "u"],
+      [`- ${esc(x.del)}`, "del"], [`+ ${esc(x.add)}`, "add"],
+      [`● Bash(bin/test)`, "u"], [`  ✓ 48 passed, 0 failed  (6.2s)`, "g"],
+      [`<span class="m">● Opened PR #${2190 + Math.floor(Math.random() * 40)} · ${esc(branch)}</span>`],
+      [`✻ Done. ${f.id} fixed in 4m 12s.`, "g"],
+    ], 380);
+  } else if (mv.type === "TEST") {
+    document.getElementById("termTitle").textContent = `~/opendate/${r} · zsh`;
+    await ttype(`git switch -c ${branch}`);
+    await ttype(`$EDITOR spec/regressions/${f.id.toLowerCase()}_spec.rb`);
+    await tsteps([[`+ it "${esc(x.why)}" do`, "add"], [`+   expect { reproduce_${f.id.toLowerCase().replace("-", "_")} }.not_to raise_error`, "add"], [`+ end`, "add"]]);
+    await ttype(`bin/test spec/regressions`);
+    await tsteps([[`  ✗ 1 failed (good, it reproduces)`, "r"]], 500);
+    await tsteps([[`- ${esc(x.del)}`, "del"], [`+ ${esc(x.add)}`, "add"]]);
+    await ttype(`bin/test`);
+    await tsteps([[`  ✓ 1,204 passed, 0 failed  (41.8s)`, "g"], [`  coverage 81.2% → 81.6%`, "m"]], 500);
+  } else if (mv.type === "CODE") {
+    document.getElementById("termTitle").textContent = `~/opendate/${r} · zsh`;
+    await ttype(`git diff --stat`);
+    await tsteps([[` ${esc(x.file)} | 2 +-`, "m"], [`- ${esc(x.del)}`, "del"], [`+ ${esc(x.add)}`, "add"]]);
+    await ttype(`git commit -am "${f.id}: ${x.why}"`);
+    await ttype(`git push -u origin ${branch}`);
+    await ttype(`gh pr create --fill --reviewer @opendate/eng`);
+    const n = 2190 + Math.floor(Math.random() * 40);
+    await tsteps([[`https://github.com/opendate/${r}/pull/${n}`, "u"], [`● CI  ✓ lint  ✓ types  ✓ rspec  ✓ playwright`, "g"], [`● Approved by 1 reviewer · merged · deploying to prod`, "g"]], 450);
+  } else {
+    document.getElementById("termTitle").textContent = `~/ · life`;
+    await ttype(`brew install coffee`);
+    await tsteps([[`==> Pouring espresso--2.0.arm64_sonoma.bottle.tar.gz`, "m"], [`☕  /opt/homebrew/Cellar/coffee/2.0: 1 file, 12oz`, "g"], [`Focus restored to 100%.`, "g"]], 450);
+  }
+  document.getElementById("termSt").textContent = "done"; document.getElementById("termSt").style.color = "var(--good)";
+}
 
 // ---------- state ----------
 const S = { caught: new Set(), xp: 0, lvl: 12, xpInLvl: 20, player: { hp: 60, max: 60 }, foe: null, pp: MOVES.map(m => m.pp), busy: false, mode: "title", cursor: 0 };
@@ -349,6 +437,7 @@ async function useMove(i) {
   if (S.pp[i] <= 0) { await say("No PP left!\nTake a break.", false); drawMenu(); return; }
   S.busy = true; S.mode = "busy"; drawMenu(); S.pp[i]--;
   await say(`PIKACHU used\n${mv.name}!`, false);
+  await work(mv, f);
   if (mv.type === "HEAL") {
     S.player.hp = S.player.max; setHp("player"); await jingle([660, 880]);
     await say("PIKACHU is fully\ncaffeinated!");

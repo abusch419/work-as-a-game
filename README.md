@@ -14,13 +14,14 @@ Open http://localhost:8000. Or just double-click `index.html`.
 
 Controls: arrow keys, Z or Enter = A, X or Esc = B. Clicking the screen or the A and B buttons also works. You can click any ticket in the list to battle it.
 
-## Demo script (3 minutes)
+## Demo script (4 minutes)
 
 1. Press A on the title screen. Oak tells you how many tickets are open.
-2. Battle FLAKY TEST. Pick WRITE TEST to get "super effective" (each ticket has a weakness).
-3. Win and watch the XP, the level up, and a gym badge unlocking on the right.
-4. Click PROD INCIDENT (P0, a Voltorb) and battle it with SHIP PR.
-5. Try RUN on the Q4 LAUNCH boss. You can't run from Q4.
+2. Battle FLAKY TEST. Pick WRITE TEST to get "super effective" (each ticket has a weakness). Watch the terminal under the Game Boy: it writes a failing regression test, patches the code and runs the suite.
+3. On LEGACY CODE or PROD INCIDENT, pick CLAUDE CODE. The terminal starts a Claude Code session, shows a plan, edits the file, runs tests and opens a PR.
+4. Win and watch the XP, the level up, and a gym badge unlocking on the right.
+5. Click PROD INCIDENT (P0, a Voltorb) and battle it with SHIP PR.
+6. Try RUN on the Q4 LAUNCH boss. You can't run from Q4.
 
 ## How the pitch maps
 
@@ -28,7 +29,7 @@ Controls: arrow keys, Z or Enter = A, X or Esc = B. Clicking the screen or the A
 |---|---|
 | Wild Pokemon | Linear tickets, failing CI, Sentry alerts |
 | Level | Priority and size |
-| Moves | SHIP PR, WRITE TEST, CLAUDE CODE, COFFEE |
+| Moves | SHIP PR (git push + PR + CI), WRITE TEST (red then green), CLAUDE CODE (plan, edit, test, PR), COFFEE |
 | Gym badges | Hold Confirmed, Offer Sent, Sold Out Show, Show Settled... |
 | Fainting | Burnout, so the ticket goes back to the backlog |
 
