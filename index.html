@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Opendate Yellow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0b; --panel: #111113; --line: #232327; --text: #e8e8ea; --muted: #8a8a93;
+  --accent: #f5d90a; --good: #3ddc84; --bad: #ff5c5c;
+  --gb-white: #f8f8f0; --gb-light: #d8c870; --gb-dark: #605020; --gb-black: #181810;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; }
+a { color: var(--accent); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+.brand { font-weight: 800; letter-spacing: -0.02em; font-size: 18px; }
+.brand span { color: var(--accent); }
+.tag { color: var(--muted); font-size: 12px; }
+.grid { display: grid; grid-template-columns: minmax(0, 520px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.card h2 { margin: 0 0 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 600; display: flex; justify-content: space-between; }
+.side { display: grid; gap: 16px; }
+
+/* Game Boy shell */
+.shell { background: #e8d44d; border-radius: 12px 12px 48px 12px; padding: 22px 22px 30px; box-shadow: inset 0 -4px 0 #c9b52f; }
+.bezel { background: #3a3a44; border-radius: 8px 8px 28px 8px; padding: 18px 28px 22px; }
+.bezel .lbl { font-family: "Press Start 2P", monospace; color: #a8a8b8; font-size: 7px; margin-bottom: 8px; display: flex; gap: 6px; align-items: center; }
+.led { width: 7px; height: 7px; border-radius: 50%; background: #ff3b3b; box-shadow: 0 0 6px #ff3b3b; }
+.screen-box { width: 100%; aspect-ratio: 160 / 144; position: relative; overflow: hidden; background: var(--gb-white); }
+.screen { position: absolute; top: 0; left: 0; width: 160px; height: 144px; transform-origin: 0 0; font-family: "Press Start 2P", monospace; font-size: 8px; line-height: 8px; color: var(--gb-black); image-rendering: pixelated; }
+.screen img { image-rendering: pixelated; position: absolute; mix-blend-mode: multiply; }
+.below { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding: 0 6px; }
+.logo { font-family: "Press Start 2P", monospace; color: #2b3a8c; font-size: 9px; font-style: italic; }
+.btns { display: flex; gap: 14px; }
+.btn { width: 40px; height: 40px; border-radius: 50%; background: #9c2a4a; border: 0; color: #f0c0d0; font-family: "Press Start 2P", monospace; font-size: 10px; cursor: pointer; box-shadow: 0 3px 0 #6a1a30; }
+.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #6a1a30; }
+.hint { color: #6a5a10; font-size: 11px; margin-top: 12px; text-align: center; }
+
+/* in-screen pieces (all in 160x144 logical px) */
+.abs { position: absolute; }
+.box { position: absolute; background: var(--gb-white); border: 2px solid var(--gb-black); outline: 1px solid var(--gb-white); outline-offset: -4px; border-radius: 2px; }
+.hpbar { position: absolute; height: 4px; width: 48px; border: 1px solid var(--gb-black); background: var(--gb-white); border-radius: 2px; }
+.hpbar i { display: block; height: 100%; background: #38a838; transition: width .5s steps(12); }
+.hpbar i.mid { background: #e8b800; } .hpbar i.low { background: #d82800; }
+.hudline { position: absolute; height: 2px; background: var(--gb-black); }
+.cursor::before { content: "▶"; position: absolute; left: -8px; font-size: 7px; }
+.blink { animation: blink 0.8s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.shake { animation: shake .3s steps(2) 2; }
+@keyframes shake { 0%,100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
+.flash { animation: flash .15s steps(1) 4; }
+@keyframes flash { 50% { opacity: 0; } }
+.faint { transition: transform .6s steps(6), opacity .6s steps(6); transform: translateY(40px); opacity: 0; }
+.slide-in-r { animation: sinr .7s steps(10); } @keyframes sinr { from { transform: translateX(-120px); } }
+.slide-in-l { animation: sinl .7s steps(10); } @keyframes sinl { from { transform: translateX(120px); } }
+
+/* dashboard */
+.trainer { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: center; }
+.trainer .av { width: 64px; height: 64px; background: var(--gb-white); border-radius: 8px; display: grid; place-items: center; }
+.trainer .av img { width: 56px; image-rendering: pixelated; mix-blend-mode: multiply; }
+.name { font-weight: 800; font-size: 15px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.stat { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.stat b { display: block; font-size: 20px; font-weight: 800; color: var(--text); }
+.stat span { color: var(--muted); font-size: 11px; }
+.xp { height: 6px; background: #1d1d21; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.xp i { display: block; height: 100%; background: var(--accent); transition: width .6s; }
+.badges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.badge { border: 1px solid var(--line); border-radius: 8px; padding: 8px 6px; text-align: center; opacity: .35; filter: grayscale(1); transition: all .4s; }
+.badge.on { opacity: 1; filter: none; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.badge .pic { background: var(--gb-white); border-radius: 6px; height: 52px; display: grid; place-items: center; }
+.badge img { width: 44px; image-rendering: pixelated; mix-blend-mode: multiply; }
+.badge div.t { font-size: 10px; margin-top: 6px; line-height: 1.3; }
+.badge div.s { font-size: 9px; color: var(--muted); }
+.quests { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.quests li { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; transition: border-color .2s; }
+.quests li:hover { border-color: #3a3a40; }
+.quests li.done { opacity: .45; text-decoration: line-through; cursor: default; }
+.quests li.active { border-color: var(--accent); }
+.quests .pic { background: var(--gb-white); border-radius: 6px; width: 40px; height: 40px; display: grid; place-items: center; }
+.quests .pic img { width: 34px; image-rendering: pixelated; mix-blend-mode: multiply; }
+.quests .src { color: var(--muted); font-size: 11px; }
+.pill { font-size: 10px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.pill.hi { color: var(--bad); border-color: #4a2020; }
+.log { font-size: 11px; color: var(--muted); max-height: 140px; overflow: auto; display: grid; gap: 4px; }
+.log .g { color: var(--good); } .log .y { color: var(--accent); }
+.how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+@media (max-width: 700px) { .how { grid-template-columns: 1fr; } }
+.how .card p { margin: 0; color: var(--muted); line-height: 1.55; font-size: 12px; }
+.how .card code { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">opendate<span>.yellow</span> <span class="tag">// your work, as a gen 1 battle</span></div>
+    <div class="tag">tickets = wild encounters · PRs = attacks · milestones = gym badges</div>
+  </header>
+
+  <div class="grid">
+    <div>
+      <div class="shell">
+        <div class="bezel">
+          <div class="lbl"><span class="led"></span>DOT MATRIX WITH STEREO SOUND</div>
+          <div class="screen-box" id="screenBox"><div class="screen" id="screen"></div></div>
+        </div>
+        <div class="below">
+          <div class="logo">Opendate COLOR</div>
+          <div class="btns"><button class="btn" id="bB">B</button><button class="btn" id="bA">A</button></div>
+        </div>
+        <div class="hint">Arrows to move · Z / Enter = A · X / Esc = B</div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="card">
+        <h2><span>Trainer card</span><span id="lvl">LV 12</span></h2>
+        <div class="trainer">
+          <div class="av"><img src="sprites/red.png" alt=""></div>
+          <div>
+            <div class="name">ALEX · Opendate Eng</div>
+            <div class="tag" id="rank">Rank: Bug Catcher</div>
+            <div class="xp"><i id="xpbar" style="width:20%"></i></div>
+          </div>
+        </div>
+        <div class="stats">
+          <div class="stat"><b id="sCaught">0</b><span>tickets caught</span></div>
+          <div class="stat"><b id="sXp">0</b><span>XP today</span></div>
+          <div class="stat"><b id="sStreak">3🔥</b><span>day streak</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span>Wild tickets on Route 1</span><span>from Linear + GitHub + Sentry</span></h2>
+        <ul class="quests" id="quests"></ul>
+      </div>
+
+      <div class="card">
+        <h2><span>Gym badges</span><span id="badgeCount">0 / 8</span></h2>
+        <div class="badges" id="badges"></div>
+      </div>
+
+      <div class="card">
+        <h2><span>Battle log</span></h2>
+        <div class="log" id="log"><div>› Save file loaded. Welcome back.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="how">
+    <div class="card"><h2>1 · Encounter</h2><p>Each open ticket, failing check or Sentry alert spawns as a wild monster. Priority sets its level. <code>P0 PROD INCIDENT</code> is a Voltorb for a reason.</p></div>
+    <div class="card"><h2>2 · Battle</h2><p>Your moves are real actions. <code>SHIP PR</code>, <code>WRITE TEST</code>, <code>CLAUDE CODE</code>. Each monster has a type weakness, so the right fix is super effective.</p></div>
+    <div class="card"><h2>3 · Badges</h2><p>Gym leaders are Opendate milestones: offers sent, shows settled, sold out nights. Beat the Elite Four and you earned your Q4.</p></div>
+  </div>
+</div>
+
+<script>
+// ---------- data ----------
+const MOVES = [
+  { name: "SHIP PR",     type: "CODE",  pp: 15, power: 40 },
+  { name: "WRITE TEST",  type: "TEST",  pp: 20, power: 35 },
+  { name: "CLAUDE CODE", type: "AI",    pp: 10, power: 55 },
+  { name: "COFFEE",      type: "HEAL",  pp: 5,  power: 0  },
+];
+
+const TICKETS = [
+  { id: "OD-412", name: "FLAKY TEST",    sprite: "porygon",  lv: 9,  hp: 40, weak: "TEST", src: "GitHub CI · checkout.spec.ts", pri: "P2",
+    atk: ["RANDOM FAIL", "PASS LOCALLY"] },
+  { id: "OD-388", name: "SLOW QUERY",    sprite: "slowpoke", lv: 14, hp: 55, weak: "CODE", src: "Datadog · /api/shows?venue=", pri: "P2",
+    atk: ["FULL TABLE SCAN", "N+1"] },
+  { id: "OD-401", name: "DUPE TICKET",   sprite: "ditto",    lv: 5,  hp: 25, weak: "AI",   src: "Linear · same as OD-377", pri: "P3",
+    atk: ["TRANSFORM"] },
+  { id: "OD-420", name: "LEGACY CODE",   sprite: "muk",      lv: 22, hp: 70, weak: "AI",   src: "settlements_controller.rb (2017)", pri: "P2",
+    atk: ["SLUDGE", "NO TESTS"] },
+  { id: "OD-431", name: "BLOCKED PR",    sprite: "snorlax",  lv: 30, hp: 80, weak: "CODE", src: "GitHub · waiting on review 4d", pri: "P1",
+    atk: ["REST", "REQUEST CHANGES"] },
+  { id: "OD-433", name: "PROD INCIDENT", sprite: "voltorb",  lv: 35, hp: 60, weak: "CODE", src: "Sentry · ticket checkout 500s", pri: "P0",
+    atk: ["SELFDESTRUCT", "PAGE ONCALL"] },
+  { id: "OD-399", name: "SLACK PING",    sprite: "magikarp", lv: 3,  hp: 15, weak: "AI",   src: "#eng · \"quick q\"", pri: "P3",
+    atk: ["SPLASH"] },
+  { id: "Q4",     name: "Q4 LAUNCH",     sprite: "mewtwo",   lv: 70, hp: 120, weak: "AI",  src: "Roadmap · final boss", pri: "BOSS",
+    atk: ["PSYCHIC", "SCOPE CREEP", "DEADLINE"] },
+];
+
+const GYMS = [
+  { who: "brock",    title: "Hold Confirmed",     at: 1 },
+  { who: "misty",    title: "Offer Sent",         at: 2 },
+  { who: "lt.surge", title: "Tix On Sale",        at: 3 },
+  { who: "erika",    title: "Sold Out Show",      at: 4 },
+  { who: "koga",     title: "Show Settled",       at: 5 },
+  { who: "sabrina",  title: "Zero Bug Week",      at: 6 },
+  { who: "blaine",   title: "Shipped on Friday",  at: 7 },
+  { who: "giovanni", title: "Q4 Roadmap",         at: 8 },
+];
+
+// ---------- state ----------
+const S = { caught: new Set(), xp: 0, lvl: 12, xpInLvl: 20, player: { hp: 60, max: 60 }, foe: null, pp: MOVES.map(m => m.pp), busy: false, mode: "title", cursor: 0 };
+
+// ---------- helpers ----------
+const $ = id => document.getElementById(id);
+const scr = $("screen");
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function fit() { const w = $("screenBox").clientWidth; scr.style.transform = `scale(${w / 160})`; }
+addEventListener("resize", fit);
+
+let actx;
+function beep(f = 880, d = 0.03, type = "square", vol = 0.03) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.value = f; g.gain.value = vol;
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + d);
+  } catch (e) {}
+}
+async function jingle(notes) { for (const n of notes) { beep(n, 0.12, "square", 0.04); await sleep(130); } }
+
+function log(msg, cls = "") { const d = document.createElement("div"); d.className = cls; d.textContent = "› " + msg; $("log").prepend(d); }
+
+// ---------- rendering ----------
+function el(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; }
+
+function textBox() {
+  let tb = scr.querySelector("#tb");
+  if (!tb) { tb = el(`<div class="box" id="tb" style="left:0;top:96px;width:160px;height:48px"><div id="tt" class="abs" style="left:6px;top:10px;width:146px;line-height:16px;white-space:pre"></div><div id="more" class="abs blink" style="right:6px;bottom:4px;display:none">▼</div></div>`); scr.appendChild(tb); }
+  return tb;
+}
+
+let advance = null;
+function waitA() { return new Promise(r => { $("more").style.display = "block"; advance = () => { $("more").style.display = "none"; advance = null; r(); }; }); }
+
+async function say(text, wait = true) {
+  textBox();
+  const tt = $("tt"); tt.textContent = "";
+  for (const ch of text) { tt.textContent += ch; if (ch !== " " && ch !== "\n") beep(1200, 0.01, "square", 0.012); await sleep(22); }
+  if (wait) await waitA(); else await sleep(500);
+}
+
+function hpClass(p) { return p > 0.5 ? "" : p > 0.2 ? "mid" : "low"; }
+function setHp(which) {
+  const u = which === "foe" ? S.foe : S.player; const p = Math.max(0, u.hp) / u.max;
+  const bar = $(which + "Hp"); bar.style.width = (p * 100) + "%"; bar.className = hpClass(p);
+  if (which === "player") $("pHpNum").textContent = `${String(Math.max(0, u.hp)).padStart(3)}/${String(u.max).padStart(3)}`;
+}
+
+function drawBattle(t) {
+  scr.innerHTML = `
+    <div class="abs" style="left:8px;top:6px">${t.name}</div>
+    <div class="abs" style="left:40px;top:14px">:L${t.lv}</div>
+    <div class="abs" style="left:16px;top:22px;font-size:6px">HP:</div>
+    <div class="hpbar" style="left:32px;top:22px"><i id="foeHp" style="width:100%"></i></div>
+    <div class="hudline" style="left:8px;top:30px;width:74px"></div>
+    <div class="hudline" style="left:82px;top:24px;width:2px;height:8px"></div>
+    <img id="foeImg" class="slide-in-l" src="sprites/${t.sprite}.png" style="left:96px;top:0px;width:56px;height:56px;object-fit:contain">
+    <img id="meImg" class="slide-in-r" src="sprites/pikachub.png" style="left:8px;top:40px;width:64px;height:64px;">
+    <div class="abs" style="left:80px;top:56px">PIKACHU</div>
+    <div class="abs" style="left:112px;top:64px">:L${S.lvl}</div>
+    <div class="abs" style="left:80px;top:72px;font-size:6px">HP:</div>
+    <div class="hpbar" style="left:96px;top:72px"><i id="playerHp" style="width:100%"></i></div>
+    <div class="abs" id="pHpNum" style="left:88px;top:80px"></div>
+    <div class="hudline" style="left:78px;top:90px;width:76px"></div>
+    <div class="hudline" style="left:152px;top:80px;width:2px;height:10px"></div>`;
+  textBox(); setHp("foe"); setHp("player");
+}
+
+function drawMenu() {
+  scr.querySelectorAll(".menu").forEach(n => n.remove());
+  if (S.mode === "menu") {
+    const opts = ["FIGHT", "ITEM", "PKMN", "RUN"];
+    const m = el(`<div class="box menu" style="left:64px;top:96px;width:96px;height:48px"></div>`);
+    opts.forEach((o, i) => m.appendChild(el(`<div class="abs ${S.cursor === i ? "cursor" : ""}" style="left:${i % 2 ? 58 : 14}px;top:${i < 2 ? 12 : 28}px">${o}</div>`)));
+    scr.appendChild(m);
+    textBox(); $("tt").textContent = "";
+  } else if (S.mode === "moves") {
+    const m = el(`<div class="box menu" style="left:32px;top:64px;width:128px;height:80px"></div>`);
+    MOVES.forEach((mv, i) => m.appendChild(el(`<div class="abs ${S.cursor === i ? "cursor" : ""}" style="left:14px;top:${10 + i * 16}px">${mv.name}</div>`)));
+    const mv = MOVES[S.cursor];
+    const info = el(`<div class="box menu" style="left:0;top:40px;width:88px;height:32px;font-size:7px"><div class="abs" style="left:6px;top:6px">TYPE/</div><div class="abs" style="left:14px;top:14px">${mv.type}</div><div class="abs" style="left:34px;top:22px">${S.pp[S.cursor]}/${mv.pp}</div></div>`);
+    scr.appendChild(m); scr.appendChild(info);
+  }
+}
+
+function drawTitle() {
+  scr.innerHTML = `
+    <div class="abs" style="left:0;top:10px;width:160px;text-align:center;font-size:14px;line-height:16px;color:#2b3a8c">OPENDATE</div>
+    <div class="abs" style="left:0;top:30px;width:160px;text-align:center;color:#c8a000">YELLOW VERSION</div>
+    <img src="sprites/pikachu.png" style="left:52px;top:44px;width:56px;height:56px">
+    <div class="abs blink" style="left:0;top:112px;width:160px;text-align:center">PRESS START</div>
+    <div class="abs" style="left:0;top:128px;width:160px;text-align:center;font-size:6px;color:#605020">©2026 OPENDATE ENG</div>`;
+}
+
+function drawOverworld() {
+  S.mode = "world";
+  scr.innerHTML = `
+    <div class="abs" style="left:0;top:0;width:160px;height:144px;background:repeating-linear-gradient(0deg,#e8f0c8 0 8px,#dce8b8 8px 16px)"></div>
+    <img src="sprites/prof.oak.png" style="left:52px;top:14px;width:56px;height:56px">`;
+  const open = TICKETS.filter(t => !S.caught.has(t.id));
+  (async () => {
+    if (!open.length) { await say("OAK: You cleared\nevery ticket!"); await say("OAK: Go touch\ngrass. It's Q4."); return; }
+    await say(`OAK: ${open.length} wild tickets\nare in the grass!`);
+    await say("Pick one from the\nlist, or press A.");
+    startBattle(open[0].id);
+  })();
+}
+
+// ---------- quests + badges ----------
+function renderSide() {
+  $("quests").innerHTML = "";
+  TICKETS.forEach(t => {
+    const done = S.caught.has(t.id);
+    const li = el(`<li class="${done ? "done" : ""} ${S.foe && S.foe.id === t.id && !done ? "active" : ""}">
+      <div class="pic"><img src="sprites/${t.sprite}.png" alt=""></div>
+      <div><div><b>${t.name}</b> <span class="src">Lv${t.lv} · ${t.id}</span></div><div class="src">${t.src}</div></div>
+      <span class="pill ${t.pri === "P0" || t.pri === "P1" || t.pri === "BOSS" ? "hi" : ""}">${done ? "CAUGHT" : t.pri + " · weak to " + t.weak}</span></li>`);
+    if (!done) li.onclick = () => { if (!S.busy) startBattle(t.id); };
+    $("quests").appendChild(li);
+  });
+  const n = S.caught.size;
+  $("badges").innerHTML = "";
+  GYMS.forEach(g => $("badges").appendChild(el(`<div class="badge ${n >= g.at ? "on" : ""}"><div class="pic"><img src="sprites/${g.who}.png" alt=""></div><div class="t">${g.title}</div><div class="s">${g.who.replace(".", ". ").toUpperCase()}</div></div>`)));
+  $("badgeCount").textContent = `${Math.min(n, 8)} / 8`;
+  $("sCaught").textContent = n; $("sXp").textContent = S.xp;
+  $("lvl").textContent = "LV " + S.lvl; $("xpbar").style.width = S.xpInLvl + "%";
+  const ranks = ["Bug Catcher", "Youngster", "Jr. Engineer", "Cooltrainer", "Gym Leader", "Elite Four", "Champion"];
+  $("rank").textContent = "Rank: " + ranks[Math.min(ranks.length - 1, Math.floor(n / 1.2))];
+}
+
+// ---------- battle flow ----------
+async function startBattle(id) {
+  const t = TICKETS.find(x => x.id === id);
+  S.busy = true; S.foe = { ...t, max: t.hp }; S.player.hp = S.player.max; S.pp = MOVES.map(m => m.pp);
+  renderSide();
+  // encounter flash
+  scr.innerHTML = ""; for (let i = 0; i < 3; i++) { scr.style.filter = "invert(1)"; beep(220, 0.08); await sleep(90); scr.style.filter = ""; await sleep(90); }
+  drawBattle(t);
+  await sleep(700);
+  await say(t.pri === "BOSS" ? `${t.name} wants\nto fight!` : `Wild ${t.name}\nappeared!`);
+  await say(`${t.id}: ${t.src.split("·")[0].trim()}\n${t.pri} priority`);
+  await say("Go! PIKACHU!", false);
+  S.busy = false; S.mode = "menu"; S.cursor = 0; drawMenu();
+}
+
+async function useMove(i) {
+  const mv = MOVES[i], f = S.foe;
+  if (S.pp[i] <= 0) { await say("No PP left!\nTake a break.", false); drawMenu(); return; }
+  S.busy = true; S.mode = "busy"; drawMenu(); S.pp[i]--;
+  await say(`PIKACHU used\n${mv.name}!`, false);
+  if (mv.type === "HEAL") {
+    S.player.hp = S.player.max; setHp("player"); await jingle([660, 880]);
+    await say("PIKACHU is fully\ncaffeinated!");
+  } else {
+    const eff = mv.type === f.weak ? 2 : 1;
+    const dmg = Math.round(mv.power * eff * (0.85 + Math.random() * 0.3));
+    $("foeImg").classList.add("flash"); beep(120, 0.15, "sawtooth", 0.05);
+    await sleep(600); $("foeImg").classList.remove("flash");
+    f.hp -= dmg; setHp("foe"); await sleep(500);
+    if (eff > 1) await say("It's super\neffective!");
+    if (f.hp <= 0) return win();
+  }
+  // foe turn
+  const a = f.atk[Math.floor(Math.random() * f.atk.length)];
+  await say(`${f.name} used\n${a}!`, false);
+  const dmg = Math.round(4 + f.lv * 0.35 + Math.random() * 6);
+  $("meImg").classList.add("shake"); beep(90, 0.15, "sawtooth", 0.05); await sleep(600); $("meImg").classList.remove("shake");
+  S.player.hp -= dmg; setHp("player"); await sleep(400);
+  if (S.player.hp <= 0) {
+    $("meImg").classList.add("faint"); await sleep(700);
+    await say("PIKACHU fainted!\n(burnout)");
+    await say("Ticket goes back\nto the backlog.");
+    log(`Lost to ${f.name}. Backlogged.`); S.foe = null; S.busy = false; renderSide(); drawOverworld(); return;
+  }
+  S.busy = false; S.mode = "menu"; S.cursor = 0; drawMenu();
+}
+
+async function win() {
+  const f = S.foe;
+  $("foeImg").classList.add("faint"); beep(300, 0.3, "triangle", 0.05); await sleep(700);
+  await say(`${f.name}\nwas closed!`);
+  const gain = f.lv * 12;
+  S.xp += gain; S.caught.add(f.id);
+  await say(`PIKACHU gained\n${gain} EXP. Points!`);
+  S.xpInLvl += gain / 4;
+  while (S.xpInLvl >= 100) { S.xpInLvl -= 100; S.lvl++; await jingle([523, 659, 784, 1046]); await say(`PIKACHU grew to\nlevel ${S.lvl}!`); }
+  log(`Closed ${f.id} ${f.name} (+${gain} XP)`, "g");
+  const n = S.caught.size, g = GYMS.find(x => x.at === n);
+  S.foe = null; renderSide();
+  if (g) {
+    await jingle([784, 784, 784, 1046]);
+    await say(`Got the ${g.title.toUpperCase()}\nBADGE!`.slice(0, 40));
+    log(`Badge earned: ${g.title}`, "y");
+  }
+  S.busy = false; drawOverworld();
+}
+
+async function run() {
+  S.busy = true; S.mode = "busy"; drawMenu();
+  await say(S.foe.pri === "BOSS" ? "No! There's no\nrunning from Q4!" : "Got away safely!\n(snoozed ticket)");
+  if (S.foe.pri !== "BOSS") { log(`Snoozed ${S.foe.id}`); S.foe = null; renderSide(); S.busy = false; drawOverworld(); }
+  else { S.busy = false; S.mode = "menu"; drawMenu(); }
+}
+
+// ---------- input ----------
+async function press(k) {
+  if (advance && (k === "A" || k === "B")) { beep(1500, 0.02); advance(); return; }
+  if (S.busy) return;
+  if (S.mode === "title" && k === "A") { await jingle([523, 784]); drawOverworld(); return; }
+  if (S.mode === "menu") {
+    if (k === "left" || k === "right") S.cursor ^= 1;
+    if (k === "up" || k === "down") S.cursor ^= 2;
+    if (k === "A") {
+      beep(1500, 0.02);
+      if (S.cursor === 0) { S.mode = "moves"; S.cursor = 0; }
+      else if (S.cursor === 3) return run();
+      else { S.busy = true; S.mode = "busy"; drawMenu(); await say(S.cursor === 1 ? "BAG: 1x COFFEE,\n3x STANDUP SKIP" : "Only PIKACHU is\non call today."); S.busy = false; S.mode = "menu"; }
+    }
+    drawMenu();
+  } else if (S.mode === "moves") {
+    if (k === "up") S.cursor = (S.cursor + 3) % 4;
+    if (k === "down") S.cursor = (S.cursor + 1) % 4;
+    if (k === "B") { S.mode = "menu"; S.cursor = 0; }
+    if (k === "A") { beep(1500, 0.02); return useMove(S.cursor); }
+    drawMenu();
+  }
+}
+const KEYS = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", z: "A", Z: "A", Enter: "A", " ": "A", x: "B", X: "B", Escape: "B", Backspace: "B" };
+addEventListener("keydown", e => { if (KEYS[e.key]) { e.preventDefault(); press(KEYS[e.key]); } });
+$("bA").onclick = () => press("A"); $("bB").onclick = () => press("B");
+scr.onclick = () => press("A");
+
+fit(); drawTitle(); renderSide();
+</script>
+</body>
+</html>
