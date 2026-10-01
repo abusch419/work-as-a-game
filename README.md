@@ -43,4 +43,5 @@ Controls: arrow keys, Z or Enter = A, X or Esc = B. Clicking the screen or the A
 ## Notes
 
 - Sprites in `sprites/` come unmodified from the `pret/pokeyellow` disassembly. Pokemon is owned by Nintendo and Game Freak, so this is for internal fun only. Don't publish it.
+- Everything in the terminal is scripted fake output. No commands run, nothing touches git, GitHub, Linear or Claude.
 - Everything runs in a single file (`index.html`) with no build step.
