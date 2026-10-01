@@ -48,7 +48,7 @@ Controls: arrow keys, Z or Enter = A, X or Esc = B, M = mute. Clicking the scree
 
 ## Notes
 
-- Music is the original Gen 1 note data (title, route, wild battle, gym leader battle, victory) compiled from  by  and played with Web Audio. It starts on your first key press. Use the Music button or M to mute.
+- Music is the original Gen 1 note data (title, route, wild battle, gym leader battle, victory) compiled from `pret/pokeyellow` by `tools/build_music.py` and played with Web Audio. It starts on your first key press. Use the Music button or M to mute.
 
 - Sprites in `sprites/` come unmodified from the `pret/pokeyellow` disassembly. Pokemon is owned by Nintendo and Game Freak, so this is for internal fun only. Don't publish it.
 - Everything in the terminal is scripted fake output. No commands run, nothing touches git, GitHub, Linear or Claude.
