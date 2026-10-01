@@ -2,7 +2,13 @@
 
 Your Opendate work as a Gen 1 Pokemon battle. Open tickets are wild encounters, your fixes are moves, and milestones are gym badges.
 
-## Run it (1 minute)
+## Play it online
+
+https://claude.ai/artifact/UiNfaG6kWf9SiE3zmu7LSX (private until you share it from the page's Share menu)
+
+A recorded walkthrough is in `opendate-yellow-demo.mp4`.
+
+## Run it locally (1 minute)
 
 ```
 git clone -b claude/zealous-carson-dw65wj https://github.com/abusch419/work-as-a-game
