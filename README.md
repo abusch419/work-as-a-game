@@ -18,7 +18,7 @@ python3 -m http.server 8000
 
 Open http://localhost:8000. Or just double-click `index.html`.
 
-Controls: arrow keys, Z or Enter = A, X or Esc = B. Clicking the screen or the A and B buttons also works. You can click any ticket in the list to battle it.
+Controls: arrow keys, Z or Enter = A, X or Esc = B, M = mute. Clicking the screen or the A and B buttons also works. You can click any ticket in the list to battle it.
 
 ## Demo script (4 minutes)
 
@@ -47,6 +47,8 @@ Controls: arrow keys, Z or Enter = A, X or Esc = B. Clicking the screen or the A
 4. Push real stats into an actual Pokemon Yellow save file built from the `pret/pokeyellow` disassembly.
 
 ## Notes
+
+- Music is the original Gen 1 note data (title, route, wild battle, gym leader battle, victory) compiled from  by  and played with Web Audio. It starts on your first key press. Use the Music button or M to mute.
 
 - Sprites in `sprites/` come unmodified from the `pret/pokeyellow` disassembly. Pokemon is owned by Nintendo and Game Freak, so this is for internal fun only. Don't publish it.
 - Everything in the terminal is scripted fake output. No commands run, nothing touches git, GitHub, Linear or Claude.
